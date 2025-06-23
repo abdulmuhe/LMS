@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ course.title }} - Professional LMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Course Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            {% if course.course_image %}
+                <div class="position-relative mb-4" style="height: 300px; border-radius: 15px; overflow: hidden;">
+                    <img src="{{ course.course_image.url }}" class="w-100 h-100" style="object-fit: cover;" alt="{{ course.title }}">
+                    <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-end" 
+                         style="background: linear-gradient(transparent, rgba(0,0,0,0.7));">
+                        <div class="p-4 text-white">
+                            <h1 class="display-4 mb-2">{{ course.title }}</h1>
+                            <p class="lead mb-0">{{ course.code }} • {{ course.department.name }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center mb-4">
+                    <h1 class="display-4 mb-2">{{ course.title }}</h1>
+                    <p class="lead text-muted">{{ course.code }} • {{ course.department.name }}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8 mb-4">
+            <!-- Course Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Course Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Instructor:</strong>
+                            <div class="d-flex align-items-center mt-1">
+                                {% if course.instructor.profile_picture %}
+                                    <img src="{{ course.instructor.profile_picture.url }}" 
+                                         class="user-avatar me-2" alt="Instructor">
+                                {% else %}
+                                    <div class="user-avatar bg-secondary d-flex align-items-center justify-content-center me-2">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <strong>{{ course.instructor.first_name }} {{ course.instructor.last_name }}</strong>
+                                    <br><small class="text-muted">{{ course.instructor.department }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row">
+                                <div class="col-6">
+                                    <strong>Credits:</strong> {{ course.credits }}
+                                    <br><strong>Duration:</strong> {{ course.duration_weeks }} weeks
+                                </div>
+                                <div class="col-6">
+                                    <strong>Level:</strong> {{ course.get_difficulty_level_display }}
+                                    <br><strong>Max Students:</strong> {{ course.max_students }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Course Dates:</strong>
+                        <br>{{ course.start_date|date:"F d, Y" }} - {{ course.end_date|date:"F d, Y" }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Description:</strong>
+                        <p class="mt-2">{{ course.description }}</p>
+                    </div>
+                    
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="stats-card info mb-2">
+                                <h4 class="mb-0">{{ course.enrolled_students_count }}</h4>
+                                <small>Enrolled Students</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-card success mb-2">
+                                <h4 class="mb-0">{{ course.completion_rate }}%</h4>
+                                <small>Completion Rate</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-card warning mb-2">
+                                <h4 class="mb-0">{{ assignments|length }}</h4>
+                                <small>Assignments</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-card danger mb-2">
+                                <h4 class="mb-0">{{ course.max_students|sub:course.enrolled_students_count }}</h4>
+                                <small>Spots Left</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignments -->
+            {% if assignments %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tasks me-2"></i>
+                        Course Assignments
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Assignment</th>
+                                    <th>Type</th>
+                                    <th>Due Date</th>
+                                    <th>Points</th>
+                                    <th>Status</th>
+                                    {% if user.role == 'student' and is_enrolled %}
+                                        <th>Action</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for assignment in assignments %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ assignment.title }}</strong>
+                                        <br><small class="text-muted">{{ assignment.description|truncatewords:10 }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ assignment.get_assignment_type_display }}</span>
+                                    </td>
+                                    <td>
+                                        {{ assignment.due_date|date:"M d, Y" }}
+                                        <br><small class="text-muted">{{ assignment.due_date|time:"H:i" }}</small>
+                                    </td>
+                                    <td>{{ assignment.max_points }} pts</td>
+                                    <td>
+                                        {% if assignment.is_overdue %}
+                                            <span class="assignment-status status-overdue">Overdue</span>
+                                        {% else %}
+                                            <span class="assignment-status status-pending">Active</span>
+                                        {% endif %}
+                                    </td>
+                                    {% if user.role == 'student' and is_enrolled %}
+                                    <td>
+                                        <a href="{% url 'lms:submit_assignment' assignment.id %}" 
+                                           class="btn btn-primary btn-sm">
+                                            Submit
+                                        </a>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Announcements -->
+            {% if announcements %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bullhorn me-2"></i>
+                        Course Announcements
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for announcement in announcements %}
+                    <div class="mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+                        <h6 class="mb-1">{{ announcement.title }}</h6>
+                        <p class="mb-1">{{ announcement.content }}</p>
+                        <small class="text-muted">
+                            <i class="fas fa-user me-1"></i>{{ announcement.author.first_name }} {{ announcement.author.last_name }}
+                            <i class="fas fa-clock ms-3 me-1"></i>{{ announcement.created_at|timesince }} ago
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Enrollment Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Enrollment
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if user.role == 'student' %}
+                        {% if is_enrolled %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                You are enrolled in this course!
+                            </div>
+                            
+                            {% if enrollment.progress > 0 %}
+                                <div class="mb-3">
+                                    <h6>Your Progress</h6>
+                                    <div class="progress mb-2" style="height: 12px;">
+                                        <div class="progress-bar bg-success" 
+                                             style="width: {{ enrollment.progress }}%"></div>
+                                    </div>
+                                    <small class="text-muted">{{ enrollment.progress }}% Complete</small>
+                                </div>
+                            {% endif %}
+                            
+                            {% if enrollment.grade %}
+                                <div class="mb-3">
+                                    <h6>Your Grade</h6>
+                                    <span class="badge bg-success fs-6">{{ enrollment.grade }}</span>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            {% if course.enrolled_students_count >= course.max_students %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Course is full
+                                </div>
+                            {% else %}
+                                <p class="mb-3">Ready to start learning?</p>
+                                <a href="{% url 'lms:enroll_course' course.id %}" 
+                                   class="btn btn-primary btn-lg">
+                                    <i class="fas fa-plus me-2"></i>Enroll Now
+                                </a>
+                            {% endif %}
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Only students can enroll in courses
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Course Stats -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Course Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Enrollment Progress</span>
+                            <span>{{ course.enrolled_students_count }}/{{ course.max_students }}</span>
+                        </div>
+                        <div class="progress mt-1" style="height: 8px;">
+                            <div class="progress-bar bg-primary" 
+                                 style="width: {{ course.enrolled_students_count|div:course.max_students|mul:100 }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Completion Rate</span>
+                            <span>{{ course.completion_rate }}%</span>
+                        </div>
+                        <div class="progress mt-1" style="height: 8px;">
+                            <div class="progress-bar bg-success" 
+                                 style="width: {{ course.completion_rate }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h5 class="mb-0 text-primary">{{ course.credits }}</h5>
+                            <small class="text-muted">Credits</small>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="mb-0 text-success">{{ course.duration_weeks }}</h5>
+                            <small class="text-muted">Weeks</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prerequisites (if any) -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list-check me-2"></i>
+                        Course Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <strong>Department:</strong>
+                        <br>{{ course.department.name }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Difficulty Level:</strong>
+                        <br><span class="badge bg-info">{{ course.get_difficulty_level_display }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Course Code:</strong>
+                        <br><code>{{ course.code }}</code>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Created:</strong>
+                        <br>{{ course.created_at|date:"F d, Y" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

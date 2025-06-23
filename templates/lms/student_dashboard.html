@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Dashboard - Professional LMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 mb-0">
+                <i class="fas fa-user-graduate me-3"></i>
+                Student Dashboard
+            </h1>
+            <p class="lead text-muted">Welcome back, {{ user.first_name }}!</p>
+        </div>
+    </div>
+
+    <!-- Progress Overview -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card info">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0">{{ total_courses }}</h3>
+                        <p class="mb-0">Enrolled Courses</p>
+                    </div>
+                    <i class="fas fa-book fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card success">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0">{{ completed_courses }}</h3>
+                        <p class="mb-0">Completed</p>
+                    </div>
+                    <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card warning">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0">{{ pending_assignments|length }}</h3>
+                        <p class="mb-0">Pending Tasks</p>
+                    </div>
+                    <i class="fas fa-tasks fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card danger">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0">{{ overall_progress }}%</h3>
+                        <p class="mb-0">Overall Progress</p>
+                    </div>
+                    <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Enrolled Courses -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-graduation-cap me-2"></i>
+                        My Courses
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if enrollments %}
+                        <div class="row">
+                            {% for enrollment in enrollments %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card course-card h-100">
+                                    {% if enrollment.course.course_image %}
+                                        <img src="{{ enrollment.course.course_image.url }}" 
+                                             class="card-img-top course-image" 
+                                             alt="{{ enrollment.course.title }}">
+                                    {% else %}
+                                        <div class="card-img-top course-image bg-gradient d-flex align-items-center justify-content-center">
+                                            <i class="fas fa-book fa-3x text-white"></i>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div class="card-body">
+                                        <h6 class="card-title">{{ enrollment.course.title }}</h6>
+                                        <p class="card-text small text-muted">
+                                            {{ enrollment.course.code }} • {{ enrollment.course.instructor.first_name }} {{ enrollment.course.instructor.last_name }}
+                                        </p>
+                                        
+                                        <div class="mb-2">
+                                            <div class="d-flex justify-content-between small">
+                                                <span>Progress</span>
+                                                <span>{{ enrollment.progress }}%</span>
+                                            </div>
+                                            <div class="progress" style="height: 8px;">
+                                                <div class="progress-bar bg-success" 
+                                                     style="width: {{ enrollment.progress }}%"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        {% if enrollment.grade %}
+                                            <span class="badge bg-success mb-2">Grade: {{ enrollment.grade }}</span>
+                                        {% endif %}
+                                        
+                                        <a href="{% url 'lms:course_detail' enrollment.course.id %}" 
+                                           class="btn btn-primary btn-sm">
+                                            View Course
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No courses enrolled yet</h5>
+                            <a href="{% url 'lms:courses_list' %}" class="btn btn-primary">
+                                Browse Courses
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Pending Assignments -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>
+                        Pending Assignments
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if pending_assignments %}
+                        {% for item in pending_assignments %}
+                        <div class="mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+                            <h6 class="mb-1">{{ item.assignment.title }}</h6>
+                            <p class="mb-1 small text-muted">{{ item.course.title }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    Due: {{ item.assignment.due_date|date:"M d, Y" }}
+                                </small>
+                                {% if item.days_left <= 1 %}
+                                    <span class="badge bg-danger">{{ item.days_left }} day{{ item.days_left|pluralize }} left</span>
+                                {% elif item.days_left <= 3 %}
+                                    <span class="badge bg-warning">{{ item.days_left }} day{{ item.days_left|pluralize }} left</span>
+                                {% else %}
+                                    <span class="badge bg-info">{{ item.days_left }} day{{ item.days_left|pluralize }} left</span>
+                                {% endif %}
+                            </div>
+                            <a href="{% url 'lms:submit_assignment' item.assignment.id %}" 
+                               class="btn btn-sm btn-outline-primary mt-2">
+                                Submit Assignment
+                            </a>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No pending assignments.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Grades -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-star me-2"></i>
+                        Recent Grades
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_submissions %}
+                        {% for submission in recent_submissions %}
+                        <div class="mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+                            <h6 class="mb-1">{{ submission.assignment.title }}</h6>
+                            <p class="mb-1 small text-muted">{{ submission.assignment.course.title }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-success">
+                                    {{ submission.points_earned }}/{{ submission.assignment.max_points }}
+                                </span>
+                                <small class="text-muted">
+                                    {{ submission.grade_percentage }}%
+                                </small>
+                            </div>
+                            {% if submission.feedback %}
+                                <small class="text-muted d-block mt-1">
+                                    <i class="fas fa-comment me-1"></i>
+                                    {{ submission.feedback|truncatewords:10 }}
+                                </small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No graded assignments yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

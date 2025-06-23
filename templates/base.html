@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LMS{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            z-index: 1000;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .login-content {
+            margin-left: 0;
+            padding: 20px;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 12px 20px;
+            margin: 5px 15px;
+            border-radius: 8px;
+        }
+        .sidebar .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="p-4">
+            <h4 class="text-center mb-4">
+                <i class="fas fa-graduation-cap me-2"></i>
+                LMS Pro
+            </h4>
+            
+            <div class="text-center mb-4">
+                <div class="user-avatar bg-secondary d-flex align-items-center justify-content-center mb-2 mx-auto">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="small">{{ user.first_name }} {{ user.last_name }}</div>
+                <div class="small text-muted">{{ user.get_role_display }}</div>
+            </div>
+
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'lms:home' %}">
+                        <i class="fas fa-home me-2"></i> Dashboard
+                    </a>
+                </li>
+                
+                {% if user.role == 'student' %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'lms:student_dashboard' %}">
+                        <i class="fas fa-user-graduate me-2"></i> My Dashboard
+                    </a>
+                </li>
+                {% elif user.role == 'professor' %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'lms:professor_dashboard' %}">
+                        <i class="fas fa-chalkboard-teacher me-2"></i> My Dashboard
+                    </a>
+                </li>
+                {% elif user.role == 'admin' %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'lms:admin_dashboard' %}">
+                        <i class="fas fa-cogs me-2"></i> Admin Panel
+                    </a>
+                </li>
+                {% elif user.role == 'manager' %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'lms:manager_dashboard' %}">
+                        <i class="fas fa-chart-line me-2"></i> Analytics
+                    </a>
+                </li>
+                {% endif %}
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'lms:courses_list' %}">
+                        <i class="fas fa-book me-2"></i> Courses
+                    </a>
+                </li>
+                
+                <li class="nav-item mt-4">
+                    <a class="nav-link" href="{% url 'lms:logout' %}">
+                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Content Area -->
+    <div class="{% if user.is_authenticated %}main-content{% else %}login-content container mt-4{% endif %}">
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

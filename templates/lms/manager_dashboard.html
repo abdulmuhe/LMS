@@ -1,0 +1,371 @@
+{% extends 'base.html' %}
+
+{% block title %}Manager Dashboard - Professional LMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 mb-0">
+                <i class="fas fa-chart-line me-3"></i>
+                Manager Analytics Dashboard
+            </h1>
+            <p class="lead text-muted">High-level Performance Analytics & Insights</p>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="stats-card info">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0">{{ total_students }}</h2>
+                        <p class="mb-0">Total Students</p>
+                        <small class="text-light">Active learners in system</small>
+                    </div>
+                    <i class="fas fa-user-graduate fa-3x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="stats-card success">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0">{{ total_courses }}</h2>
+                        <p class="mb-0">Active Courses</p>
+                        <small class="text-light">Available for enrollment</small>
+                    </div>
+                    <i class="fas fa-book fa-3x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="stats-card warning">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0">{{ total_enrollments }}</h2>
+                        <p class="mb-0">Total Enrollments</p>
+                        <small class="text-light">Student-course combinations</small>
+                    </div>
+                    <i class="fas fa-users fa-3x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <!-- Department Performance -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-building me-2"></i>
+                        Department Performance
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="departmentChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enrollment Trends -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-trending-up me-2"></i>
+                        Enrollment Trends
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="enrollmentChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department Details -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table me-2"></i>
+                        Department Analytics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Department</th>
+                                    <th>Total Students</th>
+                                    <th>Completed Students</th>
+                                    <th>Completion Rate</th>
+                                    <th>Performance</th>
+                                    <th>Trend</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dept in department_performance %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ dept.name }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ dept.total_students }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">{{ dept.completed_students }}</span>
+                                    </td>
+                                    <td>
+                                        <strong>{{ dept.completion_rate }}%</strong>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 8px; width: 100px;">
+                                            <div class="progress-bar 
+                                                {% if dept.completion_rate >= 80 %}bg-success
+                                                {% elif dept.completion_rate >= 60 %}bg-warning
+                                                {% else %}bg-danger{% endif %}" 
+                                                 style="width: {{ dept.completion_rate }}%"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if dept.completion_rate >= 80 %}
+                                            <i class="fas fa-arrow-up text-success"></i>
+                                        {% elif dept.completion_rate >= 60 %}
+                                            <i class="fas fa-arrow-right text-warning"></i>
+                                        {% else %}
+                                            <i class="fas fa-arrow-down text-danger"></i>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">No department data available</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Performing Courses -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-trophy me-2"></i>
+                        Top Performing Courses
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if top_courses %}
+                        <div class="row">
+                            {% for course_data in top_courses %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card border-left-success">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <h6 class="card-title mb-1">{{ course_data.course.title }}</h6>
+                                                <p class="card-text small text-muted mb-2">
+                                                    {{ course_data.course.code }} • {{ course_data.course.instructor.first_name }} {{ course_data.course.instructor.last_name }}
+                                                </p>
+                                                <div class="d-flex align-items-center">
+                                                    <span class="badge bg-success me-2">{{ course_data.completion_rate }}%</span>
+                                                    <small class="text-muted">{{ course_data.enrolled_count }} students</small>
+                                                </div>
+                                            </div>
+                                            <div class="text-center">
+                                                <div class="progress-circle" data-percentage="{{ course_data.completion_rate }}">
+                                                    <span class="progress-text">{{ course_data.completion_rate }}%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No course performance data available</h5>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Insights -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Key Insights
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6 class="text-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Strong Performance
+                        </h6>
+                        <p class="small text-muted">
+                            {% if department_performance %}
+                                {% for dept in department_performance %}
+                                    {% if dept.completion_rate >= 80 %}
+                                        {{ dept.name }} department shows excellent completion rates.
+                                        {% break %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                System performance metrics are being calculated.
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6 class="text-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Areas for Improvement
+                        </h6>
+                        <p class="small text-muted">
+                            {% if department_performance %}
+                                {% for dept in department_performance %}
+                                    {% if dept.completion_rate < 60 %}
+                                        {{ dept.name }} department may need additional support.
+                                        {% break %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                Monitoring system performance for optimization opportunities.
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6 class="text-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Recommendations
+                        </h6>
+                        <ul class="small text-muted">
+                            <li>Focus on student engagement initiatives</li>
+                            <li>Provide additional instructor training</li>
+                            <li>Implement peer learning programs</li>
+                            <li>Regular performance reviews</li>
+                        </ul>
+                    </div>
+
+                    <button class="btn btn-primary w-100">
+                        <i class="fas fa-download me-2"></i>
+                        Export Full Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Department Performance Chart
+    const deptCtx = document.getElementById('departmentChart').getContext('2d');
+    const departmentChart = new Chart(deptCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for dept in department_performance %}'{{ dept.name }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Completion Rate (%)',
+                data: [{% for dept in department_performance %}{{ dept.completion_rate }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                backgroundColor: 'rgba(52, 152, 219, 0.8)',
+                borderColor: 'rgba(52, 152, 219, 1)',
+                borderWidth: 2,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Enrollment Trends Chart
+    const enrollCtx = document.getElementById('enrollmentChart').getContext('2d');
+    const enrollmentChart = new Chart(enrollCtx, {
+        type: 'line',
+        data: {
+            labels: [{% for trend in enrollment_trends %}'{{ trend.month }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Enrollments',
+                data: [{% for trend in enrollment_trends %}{{ trend.enrollments }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                borderColor: 'rgba(46, 204, 113, 1)',
+                backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Progress circles (simple implementation)
+    document.querySelectorAll('.progress-circle').forEach(function(circle) {
+        const percentage = circle.getAttribute('data-percentage');
+        circle.style.background = `conic-gradient(#28a745 ${percentage * 3.6}deg, #e9ecef 0deg)`;
+        circle.style.borderRadius = '50%';
+        circle.style.width = '60px';
+        circle.style.height = '60px';
+        circle.style.display = 'flex';
+        circle.style.alignItems = 'center';
+        circle.style.justifyContent = 'center';
+        circle.style.position = 'relative';
+    });
+</script>
+{% endblock %}

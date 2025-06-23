@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}Grade Submission - {{ submission.assignment.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-star me-2"></i>Grade Submission</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Student and Assignment Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Student Information</h5>
+                            <p><strong>Name:</strong> {{ submission.student.first_name }} {{ submission.student.last_name }}</p>
+                            <p><strong>Username:</strong> {{ submission.student.username }}</p>
+                            <p><strong>Student ID:</strong> {{ submission.student.student_id }}</p>
+                            <p><strong>Email:</strong> {{ submission.student.email }}</p>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5>Assignment Information</h5>
+                            <p><strong>Assignment:</strong> {{ submission.assignment.title }}</p>
+                            <p><strong>Course:</strong> {{ submission.assignment.course.title }}</p>
+                            <p><strong>Max Points:</strong> {{ submission.assignment.max_points }}</p>
+                            <p><strong>Due Date:</strong> {{ submission.assignment.due_date|date:"M d, Y H:i" }}</p>
+                            <p><strong>Submitted:</strong> 
+                                <span class="{% if submission.is_late %}text-danger{% else %}text-success{% endif %}">
+                                    {{ submission.submitted_at|date:"M d, Y H:i" }}
+                                    {% if submission.is_late %}
+                                        <i class="fas fa-exclamation-triangle ms-1"></i> Late
+                                    {% endif %}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Submission Content -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5>Submission Content</h5>
+                            
+                            {% if submission.submission_text %}
+                            <div class="card bg-light mb-3">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-file-text me-1"></i>Written Response</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="submission-text">{{ submission.submission_text|linebreaks }}</div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if submission.attachment %}
+                            <div class="card bg-light mb-3">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-paperclip me-1"></i>Attached File</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="fas fa-file fa-2x text-primary"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <p class="mb-1"><strong>File:</strong> {{ submission.attachment.name|slice:"12:" }}</p>
+                                            <p class="mb-0 text-muted">Click to download and review</p>
+                                        </div>
+                                        <div>
+                                            <a href="{{ submission.attachment.url }}" target="_blank" class="btn btn-primary">
+                                                <i class="fas fa-download me-1"></i>Download
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Grading Form -->
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="{{ form.points_earned.id_for_label }}" class="form-label">
+                                        <i class="fas fa-trophy me-1"></i>Points Earned (out of {{ submission.assignment.max_points }})
+                                    </label>
+                                    {{ form.points_earned }}
+                                    <div class="form-text">Enter the points earned for this submission.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.feedback.id_for_label }}" class="form-label">
+                                        <i class="fas fa-comment me-1"></i>Feedback
+                                    </label>
+                                    {{ form.feedback }}
+                                    <div class="form-text">Provide detailed feedback to help the student improve.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6><i class="fas fa-lightbulb me-1"></i>Grading Tips</h6>
+                                        <ul class="small mb-0">
+                                            <li>Be specific in your feedback</li>
+                                            <li>Highlight both strengths and areas for improvement</li>
+                                            <li>Consider effort and understanding</li>
+                                            <li>Provide actionable suggestions</li>
+                                            <li>Be encouraging and constructive</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                {% if submission.points_earned is not None %}
+                                <div class="card bg-info text-white mt-3">
+                                    <div class="card-body">
+                                        <h6><i class="fas fa-info-circle me-1"></i>Current Grade</h6>
+                                        <p class="mb-0">
+                                            <strong>{{ submission.points_earned }}/{{ submission.assignment.max_points }}</strong>
+                                            ({{ submission.grade_percentage }}%)
+                                        </p>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'lms:professor_dashboard' %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                                    </a>
+                                    
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="fas fa-check me-1"></i>Save Grade & Feedback
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.submission-text {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 15px;
+    background: white;
+    border-radius: 5px;
+    border: 1px solid #dee2e6;
+}
+</style>
+{% endblock %}

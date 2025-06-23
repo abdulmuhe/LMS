@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+
+{% block title %}Professor Dashboard - Professional LMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 mb-0">
+                <i class="fas fa-chalkboard-teacher me-3"></i>
+                Professor Dashboard
+            </h1>
+            <p class="lead text-muted">Welcome back, Prof. {{ user.first_name }}!</p>
+        </div>
+    </div>
+
+    <!-- Course Statistics -->
+    <div class="row mb-4">
+        {% for stats in course_stats %}
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card course-card">
+                <div class="card-body">
+                    <h6 class="card-title">{{ stats.course.title }}</h6>
+                    <p class="card-text small text-muted">{{ stats.course.code }}</p>
+                    
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-primary mb-0">{{ stats.enrolled_students }}</h4>
+                            <small class="text-muted">Students</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-success mb-0">{{ stats.completion_rate }}%</h4>
+                            <small class="text-muted">Completion</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <div class="d-flex justify-content-between small">
+                            <span>{{ stats.assignments_count }} Assignments</span>
+                            <span>{{ stats.pending_submissions }} Pending</span>
+                        </div>
+                        <div class="progress mt-1" style="height: 6px;">
+                            <div class="progress-bar bg-success" 
+                                 style="width: {{ stats.completion_rate }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <a href="{% url 'lms:course_detail' stats.course.id %}" 
+                       class="btn btn-primary btn-sm mt-2">
+                        Manage Course
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                You are not assigned to any courses yet.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="row">
+        <!-- Pending Submissions -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clipboard-check me-2"></i>
+                        Submissions to Grade
+                    </h5>
+                    <span class="badge bg-warning">{{ pending_submissions|length }} pending</span>
+                </div>
+                <div class="card-body">
+                    {% if pending_submissions %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Assignment</th>
+                                        <th>Course</th>
+                                        <th>Submitted</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for submission in pending_submissions %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if submission.student.profile_picture %}
+                                                    <img src="{{ submission.student.profile_picture.url }}" 
+                                                         class="user-avatar me-2" alt="Profile">
+                                                {% else %}
+                                                    <div class="user-avatar bg-secondary d-flex align-items-center justify-content-center me-2">
+                                                        <i class="fas fa-user"></i>
+                                                    </div>
+                                                {% endif %}
+                                                <div>
+                                                    <strong>{{ submission.student.first_name }} {{ submission.student.last_name }}</strong>
+                                                    <br><small class="text-muted">{{ submission.student.username }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <strong>{{ submission.assignment.title }}</strong>
+                                            <br><small class="text-muted">Max: {{ submission.assignment.max_points }} pts</small>
+                                        </td>
+                                        <td>{{ submission.assignment.course.code }}</td>
+                                        <td>
+                                            {{ submission.submitted_at|date:"M d, Y" }}
+                                            <br><small class="text-muted">{{ submission.submitted_at|time:"H:i" }}</small>
+                                        </td>
+                                        <td>
+                                            {% if submission.is_late %}
+                                                <span class="assignment-status status-overdue">Late</span>
+                                            {% else %}
+                                                <span class="assignment-status status-submitted">On Time</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'lms:grade_submission' submission.id %}" 
+                                               class="btn btn-primary btn-sm">
+                                                <i class="fas fa-edit me-1"></i>Grade
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-clipboard-check fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No submissions to grade</h5>
+                            <p class="text-muted">All caught up!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>
+                        Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'lms:create_assignment' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Create Assignment
+                        </a>
+                        <a href="{% url 'lms:courses_list' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-eye me-2"></i>View All Courses
+                        </a>
+                        <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#announcementModal">
+                            <i class="fas fa-bullhorn me-2"></i>Make Announcement
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Course Overview -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        Course Overview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="courseOverviewChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Announcement Modal -->
+<div class="modal fade" id="announcementModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-bullhorn me-2"></i>Create Announcement
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="announcementForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Content</label>
+                        <textarea class="form-control" name="content" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Course</label>
+                        <select class="form-control" name="course">
+                            <option value="">All Courses</option>
+                            {% for course in courses %}
+                                <option value="{{ course.id }}">{{ course.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitAnnouncement()">
+                    <i class="fas fa-paper-plane me-2"></i>Post Announcement
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Course Overview Chart
+    const ctx = document.getElementById('courseOverviewChart').getContext('2d');
+    const courseData = {
+        labels: [{% for stats in course_stats %}'{{ stats.course.code }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for stats in course_stats %}{{ stats.enrolled_students }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: [
+                '#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6'
+            ]
+        }]
+    };
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: courseData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    function submitAnnouncement() {
+        // This would typically submit via AJAX
+        alert('Announcement functionality would be implemented here');
+    }
+</script>
+{% endblock %}

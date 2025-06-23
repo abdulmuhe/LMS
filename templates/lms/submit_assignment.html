@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}Submit Assignment - {{ assignment.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-upload me-2"></i>Submit Assignment: {{ assignment.title }}</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Assignment Details -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <h5>Assignment Details</h5>
+                            <p><strong>Course:</strong> {{ assignment.course.title }}</p>
+                            <p><strong>Description:</strong> {{ assignment.description }}</p>
+                            <p><strong>Max Points:</strong> {{ assignment.max_points }}</p>
+                            <p><strong>Due Date:</strong> 
+                                <span class="{% if assignment.is_overdue %}text-danger{% else %}text-success{% endif %}">
+                                    {{ assignment.due_date|date:"M d, Y H:i" }}
+                                    {% if assignment.is_overdue %}
+                                        <i class="fas fa-exclamation-triangle ms-1"></i> Overdue
+                                    {% endif %}
+                                </span>
+                            </p>
+                            
+                            {% if assignment.attachment %}
+                            <p><strong>Assignment File:</strong> 
+                                <a href="{{ assignment.attachment.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download me-1"></i>Download Assignment
+                                </a>
+                            </p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            {% if existing_submission %}
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-info-circle me-1"></i>Previous Submission</h6>
+                                <p><strong>Submitted:</strong> {{ existing_submission.submitted_at|date:"M d, Y H:i" }}</p>
+                                {% if existing_submission.status == 'graded' %}
+                                    <p><strong>Grade:</strong> {{ existing_submission.points_earned }}/{{ assignment.max_points }}</p>
+                                    <p><strong>Percentage:</strong> {{ existing_submission.grade_percentage }}%</p>
+                                {% else %}
+                                    <p><strong>Status:</strong> <span class="badge bg-warning">{{ existing_submission.get_status_display }}</span></p>
+                                {% endif %}
+                                
+                                {% if existing_submission.attachment %}
+                                <p><strong>File:</strong> 
+                                    <a href="{{ existing_submission.attachment.url }}" target="_blank" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-file me-1"></i>View Submitted File
+                                    </a>
+                                </p>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Submission Form -->
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="{{ form.submission_text.id_for_label }}" class="form-label">
+                                        <i class="fas fa-edit me-1"></i>Submission Text
+                                    </label>
+                                    {{ form.submission_text }}
+                                    <div class="form-text">Provide your written response or explanation here.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.attachment.id_for_label }}" class="form-label">
+                                        <i class="fas fa-paperclip me-1"></i>Upload File
+                                    </label>
+                                    {{ form.attachment }}
+                                    <div class="form-text">
+                                        Supported formats: PDF, DOC, DOCX, TXT, ZIP, JPG, PNG (Max size: 10MB)
+                                    </div>
+                                </div>
+                                
+                                <!-- File Preview Area -->
+                                <div id="file-preview" class="mb-3" style="display: none;">
+                                    <div class="alert alert-light border">
+                                        <h6><i class="fas fa-file me-1"></i>Selected File:</h6>
+                                        <div id="file-info"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6><i class="fas fa-info-circle me-1"></i>Submission Guidelines</h6>
+                                        <ul class="small mb-0">
+                                            <li>Make sure your file is properly named</li>
+                                            <li>Include your name in the document</li>
+                                            <li>Check file size before uploading</li>
+                                            <li>You can resubmit before the deadline</li>
+                                            <li>Late submissions may be penalized</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'lms:course_detail' assignment.course.id %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-1"></i>Back to Course
+                                    </a>
+                                    
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-upload me-1"></i>
+                                        {% if existing_submission %}Update Submission{% else %}Submit Assignment{% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('{{ form.attachment.id_for_label }}');
+    const filePreview = document.getElementById('file-preview');
+    const fileInfo = document.getElementById('file-info');
+    
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const fileSize = (file.size / 1024 / 1024).toFixed(2); // MB
+            const fileName = file.name;
+            const fileType = file.type || 'Unknown';
+            
+            fileInfo.innerHTML = `
+                <p class="mb-1"><strong>Name:</strong> ${fileName}</p>
+                <p class="mb-1"><strong>Size:</strong> ${fileSize} MB</p>
+                <p class="mb-0"><strong>Type:</strong> ${fileType}</p>
+            `;
+            filePreview.style.display = 'block';
+            
+            // Validate file size (10MB limit)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size exceeds 10MB limit. Please choose a smaller file.');
+                fileInput.value = '';
+                filePreview.style.display = 'none';
+            }
+        } else {
+            filePreview.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

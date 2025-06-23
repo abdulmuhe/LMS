@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - Professional LMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 mb-0">
+                <i class="fas fa-cogs me-3"></i>
+                Admin Control Panel
+            </h1>
+            <p class="lead text-muted">System Administration Dashboard</p>
+        </div>
+    </div>
+
+    <!-- User Statistics -->
+    <div class="row mb-4">
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="stats-card info">
+                <div class="text-center">
+                    <i class="fas fa-users fa-2x mb-2"></i>
+                    <h3 class="mb-0">{{ user_stats.total_users }}</h3>
+                    <p class="mb-0">Total Users</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="stats-card success">
+                <div class="text-center">
+                    <i class="fas fa-user-graduate fa-2x mb-2"></i>
+                    <h3 class="mb-0">{{ user_stats.students }}</h3>
+                    <p class="mb-0">Students</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="stats-card warning">
+                <div class="text-center">
+                    <i class="fas fa-chalkboard-teacher fa-2x mb-2"></i>
+                    <h3 class="mb-0">{{ user_stats.professors }}</h3>
+                    <p class="mb-0">Professors</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="stats-card danger">
+                <div class="text-center">
+                    <i class="fas fa-user-shield fa-2x mb-2"></i>
+                    <h3 class="mb-0">{{ user_stats.admins }}</h3>
+                    <p class="mb-0">Admins</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="stats-card info">
+                <div class="text-center">
+                    <i class="fas fa-user-tie fa-2x mb-2"></i>
+                    <h3 class="mb-0">{{ user_stats.managers }}</h3>
+                    <p class="mb-0">Managers</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="stats-card success">
+                <div class="text-center">
+                    <i class="fas fa-book fa-2x mb-2"></i>
+                    <h3 class="mb-0">{{ course_stats.total_courses }}</h3>
+                    <p class="mb-0">Courses</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Statistics -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-users-class fa-2x text-primary mb-2"></i>
+                    <h4 class="mb-0">{{ course_stats.active_enrollments }}</h4>
+                    <p class="text-muted mb-0">Active Enrollments</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                    <h4 class="mb-0">{{ course_stats.completed_courses }}</h4>
+                    <p class="text-muted mb-0">Completed Courses</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-tasks fa-2x text-warning mb-2"></i>
+                    <h4 class="mb-0">{{ course_stats.total_assignments }}</h4>
+                    <p class="text-muted mb-0">Total Assignments</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-percentage fa-2x text-info mb-2"></i>
+                    <h4 class="mb-0">
+                        {% if course_stats.active_enrollments > 0 %}
+                            {{ course_stats.completed_courses|floatformat:0 }}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </h4>
+                    <p class="text-muted mb-0">Completion Rate</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Activities -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>
+                        Recent Activities
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <h6>New Users</h6>
+                            {% for user in recent_users %}
+                            <div class="d-flex align-items-center mb-2">
+                                {% if user.profile_picture %}
+                                    <img src="{{ user.profile_picture.url }}" class="user-avatar me-2" alt="Profile">
+                                {% else %}
+                                    <div class="user-avatar bg-secondary d-flex align-items-center justify-content-center me-2">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                {% endif %}
+                                <div class="flex-grow-1">
+                                    <strong>{{ user.first_name }} {{ user.last_name }}</strong>
+                                    <span class="badge bg-{{ user.role == 'student' and 'primary' or user.role == 'professor' and 'success' or 'warning' }} ms-2">
+                                        {{ user.get_role_display }}
+                                    </span>
+                                    <br><small class="text-muted">{{ user.date_joined|timesince }} ago</small>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <p class="text-muted">No recent users.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Department Performance -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-building me-2"></i>
+                        Department Performance
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if department_stats %}
+                        {% for dept in department_stats %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <strong>{{ dept.department }}</strong>
+                                <span class="badge bg-info">{{ dept.completion_rate }}%</span>
+                            </div>
+                            <div class="progress mb-1" style="height: 8px;">
+                                <div class="progress-bar bg-success" 
+                                     style="width: {{ dept.completion_rate }}%"></div>
+                            </div>
+                            <small class="text-muted">
+                                {{ dept.courses }} courses • {{ dept.enrollments }} enrollments
+                            </small>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No department data available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Management Tables -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-book me-2"></i>
+                        Recent Courses
+                    </h5>
+                    <button class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>Add Course
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Course</th>
+                                    <th>Instructor</th>
+                                    <th>Students</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in recent_courses %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ course.title }}</strong>
+                                        <br><small class="text-muted">{{ course.code }}</small>
+                                    </td>
+                                    <td>{{ course.instructor.first_name }} {{ course.instructor.last_name }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ course.enrolled_students_count }}</span>
+                                    </td>
+                                    <td>
+                                        {% if course.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No courses found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Recent Enrollments
+                    </h5>
+                    <button class="btn btn-primary btn-sm">
+                        <i class="fas fa-download me-1"></i>Export
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Course</th>
+                                    <th>Date</th>
+                                    <th>Progress</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for enrollment in recent_enrollments %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ enrollment.student.first_name }} {{ enrollment.student.last_name }}</strong>
+                                        <br><small class="text-muted">{{ enrollment.student.username }}</small>
+                                    </td>
+                                    <td>{{ enrollment.course.code }}</td>
+                                    <td>{{ enrollment.enrollment_date|date:"M d, Y" }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 6px; width: 60px;">
+                                            <div class="progress-bar bg-success" 
+                                                 style="width: {{ enrollment.progress }}%"></div>
+                                        </div>
+                                        <small>{{ enrollment.progress }}%</small>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No recent enrollments</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>
+                        Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-primary w-100">
+                                <i class="fas fa-user-plus me-2"></i>Add User
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-success w-100">
+                                <i class="fas fa-book me-2"></i>Create Course
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-warning w-100">
+                                <i class="fas fa-building me-2"></i>Add Department
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-info w-100">
+                                <i class="fas fa-chart-bar me-2"></i>Generate Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
